@@ -8,6 +8,12 @@ import soundfile
 
 from consts import L, LABELS, name2id, id_to_one_hot
 
+# audio_path = 'train/audio/*/*wav'
+# validation_list_path = 'train/validation_list.txt'
+
+audio_path = '*/*wav'
+validation_list_path = 'validation_list.txt'
+
 
 def load_train_data(data_dir):
     """ Return 2 lists of tuples:
@@ -17,9 +23,9 @@ def load_train_data(data_dir):
     # Just a simple regexp for paths with three groups:
     # prefix, label, user_id
     pattern = re.compile("(.+\/)?(\w+)\/([^_]+)_.+wav")
-    all_files = glob(os.path.join(data_dir, 'train/audio/*/*wav'))
+    all_files = glob(os.path.join(data_dir, audio_path))
 
-    with open(os.path.join(data_dir, 'train/validation_list.txt'), 'r') as fin:
+    with open(os.path.join(data_dir, validation_list_path), 'r') as fin:
         validation_files = fin.readlines()
     valset = set()
     for entry in validation_files:
@@ -79,8 +85,3 @@ def data_generator(data):
                 print(err, label_id, uid, fname)
 
     return generator
-
-
-t, v = load_train_data('/Users/ilya/Documents/machine_learning/kaggle_speech_recognition/data')
-gen = data_generator(t)
-print(gen().__next__()[1].shape)

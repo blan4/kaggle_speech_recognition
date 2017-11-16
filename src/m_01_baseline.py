@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import os
+
 from keras import Input, metrics
 from keras.callbacks import TensorBoard, ModelCheckpoint
 from keras.engine import Model
@@ -11,7 +13,7 @@ from data_loader import load_train_data, data_generator
 NAME = "BaselineSpeech"
 
 
-def build() -> Model:
+def build():
     inputs = Input(shape=(L, 1))  # 16000
     x = Conv1D(filters=128, kernel_size=3, strides=2, padding='same', activation='relu')(inputs)  # 8000x128
     x = MaxPooling1D(pool_size=2, padding='same')(x)  # 4000x128
@@ -36,7 +38,7 @@ def build() -> Model:
     return Model(inputs, x, name=NAME)
 
 
-def train(model: Model, train_gen, validation_gen, epochs=10, batch_size=64):
+def train(model, train_gen, validation_gen, epochs=10, batch_size=64):
     model.summary()
     model.compile(optimizer=SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True),
                   loss=K.categorical_crossentropy,
@@ -55,7 +57,7 @@ def train(model: Model, train_gen, validation_gen, epochs=10, batch_size=64):
             histogram_freq=5,
             batch_size=batch_size
         ), ModelCheckpoint(
-            "models/" + NAME + "/weights-improvement-{epoch:02d}-{val_loss:.2f}.hdf5",
+            "output/" + NAME + "/weights-improvement-{epoch:02d}-{val_loss:.2f}.hdf5",
             monitor='val_loss',
             verbose=1,
             save_best_only=True,
@@ -63,8 +65,10 @@ def train(model: Model, train_gen, validation_gen, epochs=10, batch_size=64):
         )])
 
 
-def main():
-    train_data, validate = load_train_data('/Users/ilya/Documents/machine_learning/kaggle_speech_recognition/data')
+def main(data_path):
+    os.makedirs(os.path.join("output", NAME))
+
+    train_data, validate = load_train_data(data_path)
     train_gen = data_generator(train_data)
     validate_gen = data_generator(validate)
     model = build()
