@@ -1,0 +1,6 @@
+h5py
+keras
+tensorflow
+scipy
+soundfile
+numpy
