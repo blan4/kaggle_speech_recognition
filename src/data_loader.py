@@ -6,13 +6,8 @@ from glob import glob
 import numpy as np
 import soundfile
 
-from consts import L, LABELS, name2id, id_to_one_hot
-
-# audio_path = 'train/audio/*/*wav'
-# validation_list_path = 'train/validation_list.txt'
-
-audio_path = '*/*wav'
-validation_list_path = 'validation_list.txt'
+from consts import L, LABELS, name2id, audio_path, validation_list_path
+from utils import to_categorical
 
 
 def load_train_data(data_dir):
@@ -61,18 +56,26 @@ def scale_sound(sound):
     :param sound:
     :return:
     """
+    if np.max(sound) - np.min(sound) <= 0:
+        raise ZeroDivisionError("Bad sound file: len={}".format(len(sound)))
+
     return ((sound - np.min(sound)) / (np.max(sound) - np.min(sound))).astype(np.float32)
 
 
-def data_generator(data):
+def data_generator(data, batch_size, shuffle=True):
+    if shuffle:
+        np.random.shuffle(data)
+
     def generator():
-        # Feel free to add any augmentation
         for (label_id, uid, fname) in data:
             try:
                 wav, sr = soundfile.read(fname, dtype='int32')
                 if sr != L or len(wav) < L:
                     continue
                 wav = scale_sound(wav.astype(np.int64))
+                beg = 0
+                yield np.array([wav[beg: beg + L].reshape(L, 1)]), to_categorical(label_id, len(LABELS))
+                """
                 # let's generate more silence!
                 samples_per_file = 1 if label_id != name2id['silence'] else 20
                 for _ in range(samples_per_file):
@@ -80,8 +83,23 @@ def data_generator(data):
                         beg = np.random.randint(0, len(wav) - L)
                     else:
                         beg = 0
-                    yield np.array([wav[beg: beg + L].reshape(L, 1)]), np.array([id_to_one_hot(label_id)])
+                    yield np.array([wav[beg: beg + L].reshape(L, 1)]), to_categorical(label_id, len(LABELS))
+                """
             except Exception as err:
                 print(err, label_id, uid, fname)
 
-    return generator
+    def batch_generator():
+        X = np.empty((batch_size, L, 1))
+        Y = np.empty((batch_size, len(LABELS)))
+        i = 0
+        for x, y in generator():
+            X[i] = x
+            Y[i] = y
+            i += 1
+            if i >= batch_size - 1:
+                yield X, Y
+                i = 0
+                X = np.empty((batch_size, L, 1))
+                Y = np.empty((batch_size, len(LABELS)))
+
+    return batch_generator
