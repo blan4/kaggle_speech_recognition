@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
-import os
+import random
 import re
 from glob import glob
 
 import numpy as np
-import soundfile
+import pandas as pd
 
-from consts import L, LABELS, name2id, audio_path, validation_list_path
+from consts import L, LABELS, name2id
+from sound_processing import read_wav_file
 from utils import to_categorical
 
 
-def load_train_data(data_dir):
+def load_train_data(audio_path, validation_list_path):
     """ Return 2 lists of tuples:
     [(class_id, user_id, path), ...] for train
     [(class_id, user_id, path), ...] for validation
@@ -18,9 +19,9 @@ def load_train_data(data_dir):
     # Just a simple regexp for paths with three groups:
     # prefix, label, user_id
     pattern = re.compile("(.+\/)?(\w+)\/([^_]+)_.+wav")
-    all_files = glob(os.path.join(data_dir, audio_path))
+    all_files = glob(audio_path)
 
-    with open(os.path.join(data_dir, validation_list_path), 'r') as fin:
+    with open(validation_list_path, 'r') as fin:
         validation_files = fin.readlines()
     valset = set()
     for entry in validation_files:
@@ -40,66 +41,84 @@ def load_train_data(data_dir):
 
             label_id = name2id[label]
 
-            sample = (label_id, uid, entry)
+            sample = (label, label_id, uid, entry)
             if uid in valset:
                 val.append(sample)
             else:
                 train.append(sample)
 
+    columns_list = ['label', 'label_id', 'user_id', 'wav_file']
     print('There are {} train and {} validate samples'.format(len(train), len(val)))
-    return train, val
+
+    train_df = pd.DataFrame(train, columns=columns_list)
+    valid_df = pd.DataFrame(val, columns=columns_list)
+    return train_df, valid_df
 
 
-def scale_sound(sound):
-    """
-    Min Max scaling
-    :param sound:
-    :return:
-    """
-    if np.max(sound) - np.min(sound) <= 0:
-        raise ZeroDivisionError("Bad sound file: len={}".format(len(sound)))
-
-    return ((sound - np.min(sound)) / (np.max(sound) - np.min(sound))).astype(np.float32)
+def get_silence(train_df):
+    silence_files = train_df[train_df.label == 'silence']
+    silence_data = np.concatenate([read_wav_file(x) for x in silence_files.wav_file.values])
+    return silence_data
 
 
-def data_generator(data, batch_size, shuffle=True):
-    if shuffle:
-        np.random.shuffle(data)
+def process_wav_file(fname, silence_data):
+    wav = read_wav_file(fname)
 
-    def generator():
-        for (label_id, uid, fname) in data:
-            try:
-                wav, sr = soundfile.read(fname, dtype='int32')
-                if sr != L or len(wav) < L:
-                    continue
-                wav = scale_sound(wav.astype(np.int64))
-                beg = 0
-                yield np.array([wav[beg: beg + L].reshape(L, 1)]), to_categorical(label_id, len(LABELS))
-                """
-                # let's generate more silence!
-                samples_per_file = 1 if label_id != name2id['silence'] else 20
-                for _ in range(samples_per_file):
-                    if len(wav) > L:
-                        beg = np.random.randint(0, len(wav) - L)
-                    else:
-                        beg = 0
-                    yield np.array([wav[beg: beg + L].reshape(L, 1)]), to_categorical(label_id, len(LABELS))
-                """
-            except Exception as err:
-                print(err, label_id, uid, fname)
+    if len(wav) > L:
+        i = np.random.randint(0, len(wav) - L)
+        wav = wav[i:(i + L)]
+    elif len(wav) < L:
+        rem_len = L - len(wav)
+        i = np.random.randint(0, len(silence_data) - rem_len)
+        silence_part = silence_data[i:(i + L)]
+        j = np.random.randint(0, rem_len)
+        silence_part_left = silence_part[0:j]
+        silence_part_right = silence_part[j:rem_len]
+        wav = np.concatenate([silence_part_left, wav, silence_part_right])
 
-    def batch_generator():
-        X = np.empty((batch_size, L, 1))
-        Y = np.empty((batch_size, len(LABELS)))
-        i = 0
-        for x, y in generator():
-            X[i] = x
-            Y[i] = y
-            i += 1
-            if i >= batch_size - 1:
-                yield X, Y
-                i = 0
-                X = np.empty((batch_size, L, 1))
-                Y = np.empty((batch_size, len(LABELS)))
+    return wav.reshape((L, 1))
 
-    return batch_generator
+
+def train_generator(train_df: pd.DataFrame, silence_data, batch_size, n=2000):
+    train_df = train_df[train_df.label != 'silence']
+    while True:
+        this_train = train_df.groupby('label_id').apply(lambda x: x.sample(n=n))
+        shuffled_ids = random.sample(range(this_train.shape[0]), this_train.shape[0])
+        for start in range(0, len(shuffled_ids), batch_size):
+            x_batch = []
+            y_batch = []
+            end = min(start + batch_size, len(shuffled_ids))
+            i_train_batch = shuffled_ids[start:end]
+            for i in i_train_batch:
+                x_batch.append(process_wav_file(this_train.wav_file.values[i], silence_data))
+                y_batch.append(this_train.label_id.values[i])
+            x_batch = np.array(x_batch)
+            y_batch = to_categorical(y_batch, num_classes=len(LABELS))
+            yield x_batch, y_batch
+
+
+def valid_generator(valid_df, silence_data, batch_size):
+    while True:
+        ids = list(range(valid_df.shape[0]))
+        for start in range(0, len(ids), batch_size):
+            x_batch = []
+            y_batch = []
+            end = min(start + batch_size, len(ids))
+            i_val_batch = ids[start:end]
+            for i in i_val_batch:
+                x_batch.append(process_wav_file(valid_df.wav_file.values[i], silence_data))
+                y_batch.append(valid_df.label_id.values[i])
+            x_batch = np.array(x_batch)
+            y_batch = to_categorical(y_batch, num_classes=len(LABELS))
+            yield x_batch, y_batch
+
+
+def get_sample_data(train_df, valid_df, n=30):
+    t = train_df[train_df.label != 'silence'] \
+        .groupby('label_id').apply(lambda x: x.sample(n=n)) \
+        .reset_index(drop=['label_id'])
+    v = valid_df[valid_df.label != 'silence'] \
+        .groupby('label_id').apply(lambda x: x.sample(n=n)) \
+        .reset_index(drop=['label_id'])
+
+    return t, v
