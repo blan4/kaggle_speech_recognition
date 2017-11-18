@@ -80,7 +80,7 @@ def process_wav_file(fname, silence_data):
 
 
 def train_generator(train_df: pd.DataFrame, silence_data, batch_size, n=2000):
-    train_df = train_df[train_df.label != 'silence']
+    train_df = train_df[train_df.label != 'silence']  # TODO: WHY????
     while True:
         this_train = train_df.groupby('label_id').apply(lambda x: x.sample(n=n))
         shuffled_ids = random.sample(range(this_train.shape[0]), this_train.shape[0])
@@ -115,6 +115,7 @@ def valid_generator(valid_df, silence_data, batch_size, with_y=True):
                 yield x_batch, y_batch
             else:
                 yield x_batch
+
 
 def get_sample_data(train_df, valid_df, n=30):
     t = train_df[train_df.label != 'silence'] \

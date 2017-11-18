@@ -1,40 +1,40 @@
 # -*- coding: utf-8 -*-
 import os
+from glob import glob
 
 import numpy as np
 import pandas as pd
 from keras import Input, metrics
-from keras.callbacks import TensorBoard, ModelCheckpoint, EarlyStopping
+from keras.callbacks import TensorBoard, ModelCheckpoint
 from keras.engine import Model
 from keras.layers import Conv1D, MaxPooling1D, Flatten, Dense, Dropout, K
 from keras.models import load_model
 from keras.optimizers import SGD
-
-from consts import L, LABELS, id_to_label
-from data_loader import load_train_data, train_generator, valid_generator, get_silence, get_sample_data, test_generator
-from glob import glob
 from sklearn.metrics import confusion_matrix
+
+from consts import L, LABELS, id2name
+from data_loader import load_train_data, train_generator, valid_generator, get_silence, get_sample_data, test_generator
 
 NAME = "BaselineSpeech"
 
 
 def build():
     inputs = Input(shape=(L, 1))  # 16000
-    x = Conv1D(filters=128, kernel_size=4, strides=2, padding='same', activation='relu')(inputs)  # 8000x128
-    x = MaxPooling1D(pool_size=4, padding='same')(x)  # 2000x128
-    x = Conv1D(filters=256, kernel_size=4, strides=1, padding='same', activation='relu')(x)  # 2000x256
-    x = MaxPooling1D(pool_size=4, padding='same')(x)  # 500x256
-    x = Conv1D(filters=512, kernel_size=3, strides=1, padding='same', activation='relu')(x)  # 500x512
-    x = MaxPooling1D(pool_size=4, padding='same')(x)  # 125x512
-    x = Conv1D(filters=1024, kernel_size=3, strides=1, padding='same', activation='relu')(x)  # 125x1024
-    x = MaxPooling1D(pool_size=4, padding='same')(x)  # 32x1024
-    x = Conv1D(filters=1024, kernel_size=3, strides=1, padding='same', activation='relu')(x)  # 32x1024
-    x = MaxPooling1D(pool_size=4, padding='same')(x)  # 32x1024
-    x = Conv1D(filters=1024, kernel_size=3, strides=2, padding='same', activation='relu')(x)  # 4x1024
-    x = Dropout(0.5)(x)
+    x = Conv1D(filters=256, kernel_size=4, strides=2, padding='same', activation='relu')(inputs)  # 8000x128
+    x = MaxPooling1D(pool_size=2, padding='same')(x)  # 4000x256
+    x = Conv1D(filters=256, kernel_size=3, strides=2, padding='same', activation='relu')(x)  # 2000x256
+    x = MaxPooling1D(pool_size=4, padding='same')(x)  # 1000x256
+    x = Conv1D(filters=512, kernel_size=3, strides=2, padding='same', activation='relu')(x)  # 500x512
+    x = MaxPooling1D(pool_size=2, padding='same')(x)  # 255x512
+    x = Conv1D(filters=512, kernel_size=3, strides=2, padding='same', activation='relu')(x)  # 255x512
+    x = MaxPooling1D(pool_size=2, padding='same')(x)  # 127x512
+    x = Conv1D(filters=1024, kernel_size=3, strides=2, padding='same', activation='relu')(x)  # 127x1024
+    x = MaxPooling1D(pool_size=2, padding='same')(x)  # 63x1024
+    x = Conv1D(filters=1024, kernel_size=3, strides=2, padding='same', activation='relu')(x)  # 4x2048
     x = Flatten()(x)  # 32768
     x = Dropout(0.5)(x)
-    x = Dense(256, activation='relu')(x)  # 256
+    x = Dense(1024, activation='relu')(x)  # 1024
+    x = Dropout(0.5)(x)
     x = Dense(len(LABELS), activation='sigmoid')(x)  # 12
 
     return Model(inputs, x, name=NAME)
@@ -64,12 +64,7 @@ def train(model, train_gen, validation_gen, params):
             verbose=1,
             save_best_only=True,
             mode='auto'
-        ), EarlyStopping(
-            monitor='val_loss',
-            patience=5,
-            verbose=1,
-            min_delta=0.01,
-            mode='min')])
+        )])
 
 
 def main_predict(params):
@@ -89,7 +84,7 @@ def main_predict(params):
     submission = {}
     print("SAVING")
     for i in range(len(test_paths)):
-        fname, label = os.path.basename(test_paths[i]), id_to_label[classes[i]]
+        fname, label = os.path.basename(test_paths[i]), id2name[classes[i]]
         submission[fname] = label
     with open(params['submission_path'], 'w') as fout:
         fout.write('fname,label\n')
@@ -106,12 +101,12 @@ def main_confusion_matrix(params):
     silence_data = get_silence(train_df)
     validate_gen = valid_generator(valid_df, silence_data, params['batch_size'], with_y=False)
     predictions = model.predict_generator(validate_gen, int(np.ceil(valid_df.shape[0] / params['batch_size_pred'])))
-    classes = [id_to_label[i] for i in np.argmax(predictions, axis=1)]
+    classes = [id2name[i] for i in np.argmax(predictions, axis=1)]
     y_true = valid_df['label'].values
     labels = np.unique(valid_df['label'].values)
     cm = confusion_matrix(y_true, classes, labels=labels)
     df = pd.DataFrame(cm, columns=labels, index=labels)
-    df.to_csv(os.path.join(params['output_path'], 'confusion.csv'),index_label='index')
+    df.to_csv(os.path.join(params['output_path'], 'confusion.csv'), index_label='index')
     print(df)
     return df
 

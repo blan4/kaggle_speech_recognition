@@ -4,10 +4,6 @@ from datetime import datetime
 
 from m_01_baseline import main_predict, main_train, main_confusion_matrix
 
-audio_path = 'audio/*/*wav'
-validation_list_path = 'validation_list.txt'
-output_path = 'output'
-
 if __name__ == '__main__':
     if len(sys.argv) != 3:
         print("Do `python3 src [local, gcloud, floyd] [predict, train]`")
@@ -36,8 +32,8 @@ if __name__ == '__main__':
                   'audio_path': '/mnt/data/speech/train/audio/*/*wav',
                   'validation_list_path': '/mnt/data/speech/train/validation_list.txt',
                   'tensorboard_root': './output',
-                  'sample': True,
-                  'sample_size': 1024,
+                  'sample': False,
+                  'sample_size': 2000,
                   'epochs': 40,
                   'batch_size': 64,
                   'submission_path': './submissions/submission{}.csv'.format(datetime.now()),
