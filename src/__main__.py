@@ -1,15 +1,20 @@
 # -*- coding: utf-8 -*-
 import sys
 
-from m_01_baseline import main
+from m_01_baseline import main_predict, main_train
+from datetime import datetime
 
 audio_path = 'audio/*/*wav'
 validation_list_path = 'validation_list.txt'
 output_path = 'output'
 
 if __name__ == '__main__':
-    if len(sys.argv) == 2 and sys.argv[1] == 'prod':
-        print("PRODUCTION ENV")
+    if len(sys.argv) != 3:
+      print("Do `python3 src [local, gcloud, floyd] [predict, train]`")
+      exit(-1)
+
+    if sys.argv[1] == 'floyd':
+        print("FLOYD ENV")
         params = {'data_path': '/data',
                   'output_path': '/output',
                   'audio_path': '/data/*/*wav',
@@ -18,9 +23,29 @@ if __name__ == '__main__':
                   'sample': False,
                   'sample_size': 2000,
                   'epochs': 20,
-                  'batch_size': 64
+                  'batch_size': 64,
+                  'submission_path': './output/submission{}.csv'.format(datetime.now()),
+                  'model_path': './output/weights-improvement-20-0.76.hdf5',
+                  'test_path': '???',
+                  'batch_size_pred': 64
                   }
-    else:
+    elif sys.argv[1] == 'gcloud':
+        print("GCLOUD ENV")
+        params = {'data_path': '/mnt/data/speech/',
+                  'output_path': './output',
+                  'audio_path': '/mnt/data/speech/train/audio/*/*wav',
+                  'validation_list_path': '/mnt/data/speech/train/validation_list.txt',
+                  'tensorboard_root': './output',
+                  'sample': False,
+                  'sample_size': 2000,
+                  'epochs': 40,
+                  'batch_size': 64,
+                  'submission_path': './submissions/submission{}.csv'.format(datetime.now()),
+                  'model_path': './output/weights-improvement-20-0.76.hdf5',
+                  'test_path': '/mnt/data/speech/test/audio/*wav',
+                  'batch_size_pred': 64
+                  }
+    elif sys.argv[1] == 'local':
         print("DEV ENV")
         params = {'data_path': './data',
                   'output_path': './output',
@@ -30,7 +55,20 @@ if __name__ == '__main__':
                   'sample': True,
                   'sample_size': 40,
                   'epochs': 10,
-                  'batch_size': 8
+                  'batch_size': 8,
+                  'submission_path': './submissions/submission{}.csv'.format(datetime.now()),
+                  'model_path': './weights/weights-improvement-20-0.76.hdf5',
+                  'test_path': './data/test/audio/*wav',
+                  'batch_size_pred': 1
                   }
+    else:
+        print("Do `python3 src [local, gcloud, floyd] [predict, train]`")
+        exit(-1)
 
-    main(params)
+    if sys.argv[2] == 'predict':
+        main_predict(params)
+    elif sys.argv[2] == 'train':
+        main_main(params)
+    else:
+        print("Do `python3 src [local, gcloud, floyd] [predict, train]`")
+        exit(-1)

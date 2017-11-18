@@ -122,3 +122,16 @@ def get_sample_data(train_df, valid_df, n=30):
         .reset_index(drop=['label_id'])
 
     return t, v
+
+
+def test_generator(test_paths, batch_size, silence_data):
+    # test_paths = glob(audio_path)
+    while True:
+        for start in range(0, len(test_paths), batch_size):
+            x_batch = []
+            end = min(start + batch_size, len(test_paths))
+            this_paths = test_paths[start:end]
+            for x in this_paths:
+                x_batch.append(process_wav_file(x, silence_data))
+            x_batch = np.array(x_batch)
+            yield x_batch

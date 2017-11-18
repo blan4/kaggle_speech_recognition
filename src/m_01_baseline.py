@@ -6,10 +6,12 @@ from keras import Input, metrics
 from keras.callbacks import TensorBoard, ModelCheckpoint, EarlyStopping
 from keras.engine import Model
 from keras.layers import Conv1D, MaxPooling1D, Flatten, Dense, Dropout, K
+from keras.models import load_model
 from keras.optimizers import SGD
 
-from consts import L, LABELS
-from data_loader import load_train_data, train_generator, valid_generator, get_silence, get_sample_data
+from consts import L, LABELS, id_to_label
+from data_loader import load_train_data, train_generator, valid_generator, get_silence, get_sample_data, test_generator
+from glob import glob
 
 NAME = "BaselineSpeech"
 
@@ -68,7 +70,30 @@ def train(model, train_gen, validation_gen, params):
             mode='min')])
 
 
-def main(params):
+def main_predict(params):
+    test_paths = glob(params['test_path'])
+    model = load_model(params['model_path'])
+    train_data, validate_data = load_train_data(params['audio_path'], params['validation_list_path'])
+    assert len(train_data) != 0
+    assert len(validate_data) != 0
+    silence_data = get_silence(train_data)
+    tests = test_generator(test_paths, params['batch_size_pred'], silence_data)
+    print("PREDICTING")
+    predictions = model.predict_generator(tests, int(np.ceil(len(test_paths) / params['batch_size_pred'])))
+    classes = np.argmax(predictions, axis=1)
+    submission = {}
+    print("SAVING")
+    for i in range(len(test_paths)):
+        fname, label = os.path.basename(test_paths[i]), id_to_label[classes[i]]
+        submission[fname] = label
+    with open(params['submission_path'], 'w') as fout:
+        fout.write('fname,label\n')
+        for fname, label in submission.items():
+            fout.write('{},{}\n'.format(fname, label))
+
+
+def main_train(params):
+    print(params)
     chekpoints_path = os.path.join(params['output_path'], NAME + '_weights')
     os.makedirs(chekpoints_path, exist_ok=True)
     batch_size = params['batch_size']
