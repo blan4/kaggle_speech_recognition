@@ -4,3 +4,4 @@ tensorflow
 scipy
 soundfile
 numpy
+sklearn

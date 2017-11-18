@@ -97,7 +97,7 @@ def train_generator(train_df: pd.DataFrame, silence_data, batch_size, n=2000):
             yield x_batch, y_batch
 
 
-def valid_generator(valid_df, silence_data, batch_size):
+def valid_generator(valid_df, silence_data, batch_size, with_y=True):
     while True:
         ids = list(range(valid_df.shape[0]))
         for start in range(0, len(ids), batch_size):
@@ -110,8 +110,11 @@ def valid_generator(valid_df, silence_data, batch_size):
                 y_batch.append(valid_df.label_id.values[i])
             x_batch = np.array(x_batch)
             y_batch = to_categorical(y_batch, num_classes=len(LABELS))
-            yield x_batch, y_batch
 
+            if with_y:
+                yield x_batch, y_batch
+            else:
+                yield x_batch
 
 def get_sample_data(train_df, valid_df, n=30):
     t = train_df[train_df.label != 'silence'] \

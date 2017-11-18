@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import sys
-
-from m_01_baseline import main_predict, main_train
 from datetime import datetime
+
+from m_01_baseline import main_predict, main_train, main_confusion_matrix
 
 audio_path = 'audio/*/*wav'
 validation_list_path = 'validation_list.txt'
@@ -10,9 +10,9 @@ output_path = 'output'
 
 if __name__ == '__main__':
     if len(sys.argv) != 3:
-      print("Do `python3 src [local, gcloud, floyd] [predict, train]`")
-      exit(-1)
-
+        print("Do `python3 src [local, gcloud, floyd] [predict, train]`")
+        exit(-1)
+    params = {}
     if sys.argv[1] == 'floyd':
         print("FLOYD ENV")
         params = {'data_path': '/data',
@@ -36,12 +36,12 @@ if __name__ == '__main__':
                   'audio_path': '/mnt/data/speech/train/audio/*/*wav',
                   'validation_list_path': '/mnt/data/speech/train/validation_list.txt',
                   'tensorboard_root': './output',
-                  'sample': False,
-                  'sample_size': 2000,
+                  'sample': True,
+                  'sample_size': 1024,
                   'epochs': 40,
                   'batch_size': 64,
                   'submission_path': './submissions/submission{}.csv'.format(datetime.now()),
-                  'model_path': './output/weights-improvement-20-0.76.hdf5',
+                  'model_path': './output/BaselineSpeech_weights/weights-improvement-20-0.76.hdf5',
                   'test_path': '/mnt/data/speech/test/audio/*wav',
                   'batch_size_pred': 64
                   }
@@ -68,7 +68,9 @@ if __name__ == '__main__':
     if sys.argv[2] == 'predict':
         main_predict(params)
     elif sys.argv[2] == 'train':
-        main_main(params)
+        main_train(params)
+    elif sys.argv[2] == 'confusion':
+        main_confusion_matrix(params)
     else:
         print("Do `python3 src [local, gcloud, floyd] [predict, train]`")
         exit(-1)

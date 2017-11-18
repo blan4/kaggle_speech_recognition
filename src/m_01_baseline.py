@@ -2,6 +2,7 @@
 import os
 
 import numpy as np
+import pandas as pd
 from keras import Input, metrics
 from keras.callbacks import TensorBoard, ModelCheckpoint, EarlyStopping
 from keras.engine import Model
@@ -12,6 +13,7 @@ from keras.optimizers import SGD
 from consts import L, LABELS, id_to_label
 from data_loader import load_train_data, train_generator, valid_generator, get_silence, get_sample_data, test_generator
 from glob import glob
+from sklearn.metrics import confusion_matrix
 
 NAME = "BaselineSpeech"
 
@@ -72,6 +74,9 @@ def train(model, train_gen, validation_gen, params):
 
 def main_predict(params):
     test_paths = glob(params['test_path'])
+    if params['sample']:
+        print("Get small sample")
+        test_paths = test_paths[:params['sample_size']]
     model = load_model(params['model_path'])
     train_data, validate_data = load_train_data(params['audio_path'], params['validation_list_path'])
     assert len(train_data) != 0
@@ -90,6 +95,25 @@ def main_predict(params):
         fout.write('fname,label\n')
         for fname, label in submission.items():
             fout.write('{},{}\n'.format(fname, label))
+    print('SAVED')
+
+
+def main_confusion_matrix(params):
+    model = load_model(params['model_path'])
+    train_df, valid_df = load_train_data(params['audio_path'], params['validation_list_path'])
+    assert len(train_df) != 0
+    assert len(valid_df) != 0
+    silence_data = get_silence(train_df)
+    validate_gen = valid_generator(valid_df, silence_data, params['batch_size'], with_y=False)
+    predictions = model.predict_generator(validate_gen, int(np.ceil(valid_df.shape[0] / params['batch_size_pred'])))
+    classes = [id_to_label[i] for i in np.argmax(predictions, axis=1)]
+    y_true = valid_df['label'].values
+    labels = np.unique(valid_df['label'].values)
+    cm = confusion_matrix(y_true, classes, labels=labels)
+    df = pd.DataFrame(cm, columns=labels, index=labels)
+    df.to_csv(os.path.join(params['output_path'], 'confusion.csv'),index_label='index')
+    print(df)
+    return df
 
 
 def main_train(params):
@@ -106,6 +130,7 @@ def main_train(params):
     silence_data = get_silence(train_data)
 
     if params['sample']:
+        print("Get small sample")
         train_data, validate_data = get_sample_data(train_data, validate_data, n)
 
     train_gen = train_generator(train_data, silence_data, batch_size, n=n)
