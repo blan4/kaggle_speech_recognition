@@ -22,4 +22,6 @@ def read_wav_file(fname):
     try:
         return scale_sound(wav)
     except Exception as err:
-        raise Exception("{}: {}".format(fname, err))
+        print("Warning: sound with empty data: {}. Cause: {}".format(fname, err))
+        return wav.astype(np.float32)  # TODO: this files should be removed from dataset. But for now just return unchanged.
+        # raise Exception("{}: {}".format(fname, err))
