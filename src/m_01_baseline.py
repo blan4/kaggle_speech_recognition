@@ -26,29 +26,31 @@ def build():
         ['p', 5],  # 3200x128
         ['c', 1, 5, 128],  # 3200x128
         ['p', 5],  # 640x128
-        ['c', 1, 5, 256],  # 640x256
+        ['c', 1, 4, 256],  # 640x256
         ['p', 5],  # 128x256
         ['c', 1, 4, 256],  # 128x256
         ['p', 4],  # 32x256
-        ['c', 1, 4, 512],  # 32x512
+        ['c', 1, 3, 512],  # 32x512
         ['p', 4],  # 8x512
-        ['c', 1, 4, 512],  # 8x512
+        ['c', 1, 2, 512],  # 8x512
         ['p', 4],  # 2x512
-        ['c', 1, 2, 512],  # 2x512
-        ['p', 2],  # 1x512
-        ['c', 1, 2, 512]  # 1x512
+        ['c', 1, 1, 1024],  # 2x1024
+        ['p', 2],  # 1x1024
+        ['c', 1, 1, 1024]  # 1x1024
     ]
 
     for layer in conf:
         if layer[0] == 'c':
-            x = Conv1D(filters=layer[3], kernel_size=layer[2], strides=layer[1])(x)
+            x = Conv1D(filters=layer[3], kernel_size=layer[2], strides=layer[1], padding='same', activation='relu')(x)
         elif layer[0] == 'p':
-            x = MaxPooling1D(pool_size=layer[1])(x)
+            x = MaxPooling1D(pool_size=layer[1], padding='same')(x)
         else:
             print("Unknown layer")
 
     x = Flatten()(x)
     x = Dropout(0.5)(x)
+    x = Dense(256, activation='relu')(x)
+    x = Dropout(0.25)(x)
     x = Dense(len(LABELS), activation='sigmoid')(x)  # 12
 
     return Model(inputs, x, name=NAME)
