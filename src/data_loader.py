@@ -80,9 +80,8 @@ def process_wav_file(fname, silence_data):
 
 
 def train_generator(train_df: pd.DataFrame, silence_data, batch_size, n=2000):
-    train_df = train_df[train_df.label != 'silence']  # TODO: WHY????
     while True:
-        this_train = train_df.groupby('label_id').apply(lambda x: x.sample(n=n))
+        this_train = train_df.groupby('label_id').apply(sampling(n))
         shuffled_ids = random.sample(range(this_train.shape[0]), this_train.shape[0])
         for start in range(0, len(shuffled_ids), batch_size):
             x_batch = []
@@ -118,18 +117,17 @@ def valid_generator(valid_df, silence_data, batch_size, with_y=True):
 
 
 def get_sample_data(train_df, valid_df, n=30):
-    t = train_df[train_df.label != 'silence'] \
-        .groupby('label_id').apply(lambda x: x.sample(n=n)) \
+    t = train_df \
+        .groupby('label_id').apply(sampling(n)) \
         .reset_index(drop=['label_id'])
-    v = valid_df[valid_df.label != 'silence'] \
-        .groupby('label_id').apply(lambda x: x.sample(n=n)) \
+    v = valid_df \
+        .groupby('label_id').apply(sampling(n)) \
         .reset_index(drop=['label_id'])
 
     return t, v
 
 
 def test_generator(test_paths, batch_size, silence_data):
-    # test_paths = glob(audio_path)
     while True:
         for start in range(0, len(test_paths), batch_size):
             x_batch = []
@@ -139,3 +137,23 @@ def test_generator(test_paths, batch_size, silence_data):
                 x_batch.append(process_wav_file(x, silence_data))
             x_batch = np.array(x_batch)
             yield x_batch
+
+
+def sampling(n):
+    """
+    Pandas dataframe can return sample of a subset.
+    But this function can create extra duplications, so subset could be extracted
+    :param n: subset size
+    :return: sampling function
+    """
+
+    def _sample(x):
+        if n > x.shape[0]:
+            # generate dups
+            count = n // x.shape[0] + 1
+            x = pd.concat([x] * count)
+            return x.sample(n=n)
+        else:
+            return x.sample(n=n)
+
+    return _sample

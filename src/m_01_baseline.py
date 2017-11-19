@@ -20,20 +20,34 @@ NAME = "BaselineSpeech"
 
 def build():
     inputs = Input(shape=(L, 1))  # 16000
-    x = Conv1D(filters=256, kernel_size=4, strides=2, padding='same', activation='relu')(inputs)  # 8000x128
-    x = MaxPooling1D(pool_size=2, padding='same')(x)  # 4000x256
-    x = Conv1D(filters=256, kernel_size=3, strides=2, padding='same', activation='relu')(x)  # 2000x256
-    x = MaxPooling1D(pool_size=4, padding='same')(x)  # 1000x256
-    x = Conv1D(filters=512, kernel_size=3, strides=2, padding='same', activation='relu')(x)  # 500x512
-    x = MaxPooling1D(pool_size=2, padding='same')(x)  # 255x512
-    x = Conv1D(filters=512, kernel_size=3, strides=2, padding='same', activation='relu')(x)  # 255x512
-    x = MaxPooling1D(pool_size=2, padding='same')(x)  # 127x512
-    x = Conv1D(filters=1024, kernel_size=3, strides=2, padding='same', activation='relu')(x)  # 127x1024
-    x = MaxPooling1D(pool_size=2, padding='same')(x)  # 63x1024
-    x = Conv1D(filters=1024, kernel_size=3, strides=2, padding='same', activation='relu')(x)  # 4x2048
-    x = Flatten()(x)  # 32768
-    x = Dropout(0.5)(x)
-    x = Dense(1024, activation='relu')(x)  # 1024
+    x = inputs
+    conf = [
+        ['c', 1, 5, 128],  # 16000x128
+        ['p', 5],  # 3200x128
+        ['c', 1, 5, 128],  # 3200x128
+        ['p', 5],  # 640x128
+        ['c', 1, 5, 256],  # 640x256
+        ['p', 5],  # 128x256
+        ['c', 1, 4, 256],  # 128x256
+        ['p', 4],  # 32x256
+        ['c', 1, 4, 512],  # 32x512
+        ['p', 4],  # 8x512
+        ['c', 1, 4, 512],  # 8x512
+        ['p', 4],  # 2x512
+        ['c', 1, 2, 512],  # 2x512
+        ['p', 2],  # 1x512
+        ['c', 1, 2, 512]  # 1x512
+    ]
+
+    for layer in conf:
+        if layer[0] == 'c':
+            x = Conv1D(filters=layer[3], kernel_size=layer[2], strides=layer[1])(x)
+        elif layer[0] == 'p':
+            x = MaxPooling1D(pool_size=layer[1])(x)
+        else:
+            print("Unknown layer")
+
+    x = Flatten()(x)
     x = Dropout(0.5)(x)
     x = Dense(len(LABELS), activation='sigmoid')(x)  # 12
 
