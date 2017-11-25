@@ -25,8 +25,8 @@ def main_train(params, model, train):
         print("Get small sample")
         train_data, validate_data = get_sample_data(train_data, validate_data, n)
 
-    train_gen = train_generator(train_data, silence_data, batch_size, n=n)
-    validate_gen = valid_generator(validate_data, silence_data, batch_size)
+    train_gen = train_generator(train_data, silence_data, batch_size, params['process_wav'], n=n)
+    validate_gen = valid_generator(validate_data, silence_data, batch_size, params['process_wav'])
 
     train(model, train_gen, validate_gen, dict(
         epochs=params['epochs'],
