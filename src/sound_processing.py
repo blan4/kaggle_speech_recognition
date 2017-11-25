@@ -14,9 +14,9 @@ def scale_sound_min_max(sound):
 
 
 def scale_sound_int(sound):
-    sound = sound.astype(np.float32)
-    sound = (sound + (np.iinfo(np.int16).max / 2)) / np.iinfo(np.int16).max
-    return sound
+    m = np.iinfo(np.int16).max
+    sound = (sound.astype('int32') + m) / (2.0*m)
+    return sound.astype('float32')
 
 
 def read_wav_file(fname):
