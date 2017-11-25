@@ -3,6 +3,7 @@ import sys
 from datetime import datetime
 
 from m_01_baseline import train, build
+from sound_processing import process_wav_file
 from submission import main_predict, main_confusion_matrix
 from train import main_train
 
@@ -25,7 +26,8 @@ if __name__ == '__main__':
                   'submission_path': './output/submission{}.csv'.format(datetime.now()),
                   'model_path': './output/weights-improvement-20-0.76.hdf5',
                   'test_path': '???',
-                  'batch_size_pred': 64
+                  'batch_size_pred': 64,
+                  'process_wav': process_wav_file
                   }
     elif sys.argv[1] == 'gcloud':
         print("GCLOUD ENV")
@@ -41,7 +43,8 @@ if __name__ == '__main__':
                   'submission_path': './submissions/submission{}.csv'.format(datetime.now()),
                   'model_path': './output/BaselineSpeech_weights/weights-improvement-20-0.76.hdf5',
                   'test_path': '/mnt/data/speech/test/audio/*wav',
-                  'batch_size_pred': 64
+                  'batch_size_pred': 64,
+                  'process_wav': process_wav_file
                   }
     elif sys.argv[1] == 'local':
         print("DEV ENV")
@@ -57,7 +60,8 @@ if __name__ == '__main__':
                   'submission_path': './submissions/submission{}.csv'.format(datetime.now()),
                   'model_path': './weights/weights-improvement-20-0.76.hdf5',
                   'test_path': './data/test/audio/*wav',
-                  'batch_size_pred': 1
+                  'batch_size_pred': 1,
+                  'process_wav': process_wav_file
                   }
     else:
         print("Do `python3 src [local, gcloud, floyd] [predict, train]`")

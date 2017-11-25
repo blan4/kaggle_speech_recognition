@@ -9,3 +9,8 @@ name2id = {name: i for i, name in id2name.items()}
 print(LABELS)
 print(id2name)
 print(name2id)
+
+ms_to_s = 1000.0
+frame_size = int((20 / ms_to_s) * L)
+stride_size = int((10 / ms_to_s) * L)
+strides = int(L / stride_size)

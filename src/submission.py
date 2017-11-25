@@ -21,7 +21,7 @@ def main_predict(params):
     assert len(train_data) != 0
     assert len(validate_data) != 0
     silence_data = get_silence(train_data)
-    tests = test_generator(test_paths, params['batch_size_pred'], silence_data)
+    tests = test_generator(test_paths, params['batch_size_pred'], silence_data, params['process_wav'])
     print("PREDICTING")
     predictions = model.predict_generator(tests, int(np.ceil(len(test_paths) / params['batch_size_pred'])))
     classes = np.argmax(predictions, axis=1)
@@ -43,7 +43,7 @@ def main_confusion_matrix(params):
     assert len(train_df) != 0
     assert len(valid_df) != 0
     silence_data = get_silence(train_df)
-    validate_gen = valid_generator(valid_df, silence_data, params['batch_size'], with_y=False)
+    validate_gen = valid_generator(valid_df, silence_data, params['batch_size'], params['process_wav'], with_y=False)
     predictions = model.predict_generator(validate_gen, int(np.ceil(valid_df.shape[0] / params['batch_size_pred'])))
     classes = [id2name[i] for i in np.argmax(predictions, axis=1)]
     y_true = valid_df['label'].values
