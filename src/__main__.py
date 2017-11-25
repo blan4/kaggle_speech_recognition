@@ -2,7 +2,9 @@
 import sys
 from datetime import datetime
 
-from m_01_baseline import main_predict, main_train, main_confusion_matrix
+from m_01_baseline import train, build
+from submission import main_predict, main_confusion_matrix
+from train import main_train
 
 if __name__ == '__main__':
     if len(sys.argv) != 3:
@@ -64,7 +66,7 @@ if __name__ == '__main__':
     if sys.argv[2] == 'predict':
         main_predict(params)
     elif sys.argv[2] == 'train':
-        main_train(params)
+        main_train(params, build(), train)
     elif sys.argv[2] == 'confusion':
         main_confusion_matrix(params)
     else:

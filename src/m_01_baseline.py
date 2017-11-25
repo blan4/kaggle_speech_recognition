@@ -1,19 +1,13 @@
 # -*- coding: utf-8 -*-
 import os
-from glob import glob
 
-import numpy as np
-import pandas as pd
 from keras import Input, metrics
 from keras.callbacks import TensorBoard, ModelCheckpoint
 from keras.engine import Model
 from keras.layers import Conv1D, MaxPooling1D, Flatten, Dense, Dropout, K
-from keras.models import load_model
 from keras.optimizers import SGD
-from sklearn.metrics import confusion_matrix
 
-from consts import L, LABELS, id2name
-from data_loader import load_train_data, train_generator, valid_generator, get_silence, get_sample_data, test_generator
+from consts import L, LABELS
 
 NAME = "BaselineSpeech"
 
@@ -81,78 +75,3 @@ def train(model, train_gen, validation_gen, params):
             save_best_only=True,
             mode='auto'
         )])
-
-
-def main_predict(params):
-    test_paths = glob(params['test_path'])
-    if params['sample']:
-        print("Get small sample")
-        test_paths = test_paths[:params['sample_size']]
-    model = load_model(params['model_path'])
-    train_data, validate_data = load_train_data(params['audio_path'], params['validation_list_path'])
-    assert len(train_data) != 0
-    assert len(validate_data) != 0
-    silence_data = get_silence(train_data)
-    tests = test_generator(test_paths, params['batch_size_pred'], silence_data)
-    print("PREDICTING")
-    predictions = model.predict_generator(tests, int(np.ceil(len(test_paths) / params['batch_size_pred'])))
-    classes = np.argmax(predictions, axis=1)
-    submission = {}
-    print("SAVING")
-    for i in range(len(test_paths)):
-        fname, label = os.path.basename(test_paths[i]), id2name[classes[i]]
-        submission[fname] = label
-    with open(params['submission_path'], 'w') as fout:
-        fout.write('fname,label\n')
-        for fname, label in submission.items():
-            fout.write('{},{}\n'.format(fname, label))
-    print('SAVED')
-
-
-def main_confusion_matrix(params):
-    model = load_model(params['model_path'])
-    train_df, valid_df = load_train_data(params['audio_path'], params['validation_list_path'])
-    assert len(train_df) != 0
-    assert len(valid_df) != 0
-    silence_data = get_silence(train_df)
-    validate_gen = valid_generator(valid_df, silence_data, params['batch_size'], with_y=False)
-    predictions = model.predict_generator(validate_gen, int(np.ceil(valid_df.shape[0] / params['batch_size_pred'])))
-    classes = [id2name[i] for i in np.argmax(predictions, axis=1)]
-    y_true = valid_df['label'].values
-    labels = np.unique(valid_df['label'].values)
-    cm = confusion_matrix(y_true, classes, labels=labels)
-    df = pd.DataFrame(cm, columns=labels, index=labels)
-    df.to_csv(os.path.join(params['output_path'], 'confusion.csv'), index_label='index')
-    print(df)
-    return df
-
-
-def main_train(params):
-    print(params)
-    chekpoints_path = os.path.join(params['output_path'], NAME + '_weights')
-    os.makedirs(chekpoints_path, exist_ok=True)
-    batch_size = params['batch_size']
-    n = params['sample_size']
-
-    train_data, validate_data = load_train_data(params['audio_path'], params['validation_list_path'])
-    assert len(train_data) != 0
-    assert len(validate_data) != 0
-
-    silence_data = get_silence(train_data)
-
-    if params['sample']:
-        print("Get small sample")
-        train_data, validate_data = get_sample_data(train_data, validate_data, n)
-
-    train_gen = train_generator(train_data, silence_data, batch_size, n=n)
-    validate_gen = valid_generator(validate_data, silence_data, batch_size)
-    model = build()
-
-    train(model, train_gen, validate_gen, dict(
-        epochs=params['epochs'],
-        batch_size=batch_size,
-        tensorboard_dir=os.path.join(params['tensorboard_root'], NAME),
-        chekpoints_path=chekpoints_path,
-        steps_per_epoch=n * len(LABELS) / batch_size,
-        validation_steps=int(np.ceil(validate_data.shape[0] / batch_size))
-    ))
