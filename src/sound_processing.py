@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-from scipy.io import wavfile
 
 from consts import L, stride_size, frame_size, strides
 
@@ -21,33 +20,20 @@ def scale_sound_int(sound):
     return sound.astype('float32')
 
 
-def read_wav_file(fname):
-    _, wav = wavfile.read(fname)
-    try:
-        return scale_sound_int(wav)
-    except Exception as err:
-        print("Warning: sound with empty data: {}. Cause: {}".format(fname, err))
-        wav = wav.astype(np.float32)
-        wav.fill(0.5)
-        return wav
-
-
 def windowed_sound(wav):
-    w = np.pad(wav, int(stride_size / 2), mode='constant', constant_values=0.5)
+    w = np.pad(wav, int(frame_size / 2), mode='constant', constant_values=0.5)
     ww = np.vstack([w[i * stride_size:i * stride_size + frame_size].reshape(1, frame_size) for i in range(strides)])
     return ww
 
 
-def process_wav_file(fname, silence_data):
-    wav = read_wav_file(fname)
+def process_wav_file(wav, silence_data):
     wav = adjust_len(wav, silence_data)
     return wav.reshape((L, 1))
 
 
-def process_wav_file_to_2d(fname, silence_data):
-    wav = read_wav_file(fname)
+def process_wav_file_to_2d(wav, silence_data):
     wav = adjust_len(wav, silence_data)
-    return windowed_sound(wav)
+    return windowed_sound(wav).reshape((frame_size, strides, 1))
 
 
 def adjust_len(wav, silence_data):

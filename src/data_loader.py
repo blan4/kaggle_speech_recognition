@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 from consts import LABELS, name2id
-from sound_processing import read_wav_file
+from sound_reader import read_wav_file
 from utils import to_categorical
 
 

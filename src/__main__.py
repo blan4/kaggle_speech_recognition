@@ -2,8 +2,9 @@
 import sys
 from datetime import datetime
 
-from m_01_baseline import train, build
-from sound_processing import process_wav_file
+from m_02_sound_2d import train, build
+from sound_processing import process_wav_file_to_2d
+from sound_reader import read_and_process
 from submission import main_predict, main_confusion_matrix
 from train import main_train
 
@@ -13,6 +14,7 @@ def main(args):
         print("Do `python3 src [local, gcloud, floyd] [predict, train]`")
         exit(-1)
     params = {}
+    process_sound = read_and_process(process_wav_file_to_2d)
     if args[1] == 'floyd':
         print("FLOYD ENV")
         params = {'data_path': '/data',
@@ -28,7 +30,7 @@ def main(args):
                   'model_path': './output/weights-improvement-20-0.76.hdf5',
                   'test_path': '???',
                   'batch_size_pred': 64,
-                  'process_wav': process_wav_file
+                  'process_wav': process_sound
                   }
     elif args[1] == 'gcloud':
         print("GCLOUD ENV")
@@ -45,7 +47,7 @@ def main(args):
                   'model_path': './output/BaselineSpeech_weights/weights-improvement-20-0.76.hdf5',
                   'test_path': '/mnt/data/speech/test/audio/*wav',
                   'batch_size_pred': 64,
-                  'process_wav': process_wav_file
+                  'process_wav': process_sound
                   }
     elif sys.argv[1] == 'local':
         print("DEV ENV")
@@ -62,7 +64,7 @@ def main(args):
                   'model_path': './weights/weights-improvement-20-0.76.hdf5',
                   'test_path': './data/test/audio/*wav',
                   'batch_size_pred': 1,
-                  'process_wav': process_wav_file
+                  'process_wav': process_sound
                   }
     else:
         print("Do `python3 src [local, gcloud, floyd] [predict, train]`")
