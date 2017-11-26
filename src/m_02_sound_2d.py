@@ -13,37 +13,27 @@ NAME = "BaselineSpeech"
 
 
 def build():
-    inputs = Input(shape=(frame_size, strides, 1))  # 400x100x1
+    inputs = Input(shape=(frame_size, strides, 1))  # 320x160x1
     x = inputs
 
-    x = Conv2D(128, kernel_size=(6, 3), strides=1, padding='same', activation='relu')(x)  # 320x160x128
-    x = Conv2D(128, kernel_size=(6, 3), strides=1, padding='same', activation='relu')(x)  # 320x160x128
-    x = MaxPooling2D(pool_size=(2, 1), padding='same')(x)  # 160x160x128
-    x = Conv2D(128, kernel_size=(3, 3), strides=1, padding='same', activation='relu')(x)  # 160x160x128
-    x = Conv2D(128, kernel_size=(3, 3), strides=1, padding='same', activation='relu')(x)  # 160x160x128
-    x = MaxPooling2D(pool_size=(2, 2), padding='same')(x)  # 80x80x128
-    x = Conv2D(256, kernel_size=(3, 3), strides=1, padding='same', activation='relu')(x)  # 80x80x256
-    x = Conv2D(256, kernel_size=(3, 3), strides=1, padding='same', activation='relu')(x)  # 80x80x256
-    x = MaxPooling2D(pool_size=(2, 2), padding='same')(x)  # 40x40x256
-    x = Conv2D(256, kernel_size=(3, 3), strides=1, padding='same', activation='relu')(x)  # 40x40x256
+    x = MaxPooling2D(pool_size=(2, 1), padding='same')(x)  # 160x160x1
+    x = Conv2D(64, kernel_size=(6, 3), strides=1, padding='same', activation='relu')(x)  # 160x160x64
+    x = MaxPooling2D(pool_size=(2, 2), padding='same')(x)  # 80x80x64
+    x = Conv2D(128, kernel_size=(3, 3), strides=1, padding='same', activation='relu')(x)  # 80x80x128
+    x = MaxPooling2D(pool_size=(2, 2), padding='same')(x)  # 40x40x128
     x = Conv2D(256, kernel_size=(3, 3), strides=1, padding='same', activation='relu')(x)  # 40x40x256
     x = MaxPooling2D(pool_size=(2, 2), padding='same')(x)  # 20x20x256
-    x = Conv2D(512, kernel_size=(3, 3), strides=1, padding='same', activation='relu')(x)  # 20x20x512
-    x = Conv2D(512, kernel_size=(3, 3), strides=1, padding='same', activation='relu')(x)  # 20x20x512
+    x = Conv2D(256, kernel_size=(3, 3), strides=1, padding='same', activation='relu')(x)  # 20x20x256
     x = MaxPooling2D(pool_size=(2, 2), padding='same')(x)  # 10x10x256
     x = Conv2D(512, kernel_size=(3, 3), strides=1, padding='same', activation='relu')(x)  # 10x10x512
-    x = Conv2D(512, kernel_size=(3, 3), strides=1, padding='same', activation='relu')(x)  # 10x10x512
-    x = MaxPooling2D(pool_size=(2, 2), padding='same')(x)  # 5x5x256
-    x = Conv2D(512, kernel_size=(3, 3), strides=1, padding='same', activation='relu')(x)  # 5x5x512
+    x = MaxPooling2D(pool_size=(2, 2), padding='same')(x)  # 5x5x512
     x = Conv2D(512, kernel_size=(3, 3), strides=1, padding='same', activation='relu')(x)  # 5x5x512
     x = MaxPooling2D(pool_size=(2, 2), padding='same')(x)  # 3x3x512
     x = BatchNormalization()(x)
 
     x = Flatten()(x)
-    x = Dense(2048, activation='relu')(x)
-    x = BatchNormalization()(x)
     x = Dropout(0.5)(x)
-    x = Dense(2048, activation='relu')(x)
+    x = Dense(1024, activation='relu')(x)
     x = BatchNormalization()(x)
     x = Dropout(0.5)(x)
     x = Dense(len(LABELS), activation='sigmoid')(x)
@@ -54,7 +44,7 @@ def build():
 def train(model, train_gen, validation_gen, params):
     print(params)
     model.summary()
-    model.compile(optimizer=SGD(lr=0.1, decay=1e-6, momentum=0.9, nesterov=True),
+    model.compile(optimizer=SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True),
                   loss=K.categorical_crossentropy,
                   metrics=[metrics.categorical_accuracy])
 

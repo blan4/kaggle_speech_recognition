@@ -23,7 +23,7 @@ def main(args):
                   'validation_list_path': '/data/validation_list.txt',
                   'tensorboard_root': '/output',
                   'sample': False,
-                  'sample_size': 2000,
+                  'sample_size': 1000,
                   'epochs': 20,
                   'batch_size': 64,
                   'submission_path': './output/submission{}.csv'.format(datetime.now()),
@@ -40,7 +40,7 @@ def main(args):
                   'validation_list_path': '/mnt/data/speech/train/validation_list.txt',
                   'tensorboard_root': './output',
                   'sample': False,
-                  'sample_size': 2000,
+                  'sample_size': 1000,
                   'epochs': 40,
                   'batch_size': 64,
                   'submission_path': './submissions/submission{}.csv'.format(datetime.now()),
@@ -77,7 +77,7 @@ def main(args):
     elif args[2] == 'confusion':
         main_confusion_matrix(params)
     else:
-        print("Do `python3 src [local, gcloud, floyd] [predict, train]`")
+        print("Do `python3 src [local, gcloud, floyd] [predict, train, confusion]`")
         exit(-1)
 
 

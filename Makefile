@@ -7,3 +7,6 @@ ssh:
 
 shutdown:
 	gcloud compute ssh --command "sudo shutdown -h now" --project "mltest-180907" --zone "europe-west1-d" "keras--tf-gpu"
+
+download:
+	gcloud compute scp "keras--tf-gpu":~/kaggle_speech_recognition/submissions submissions/ --recurse --zone europe-west1-d
