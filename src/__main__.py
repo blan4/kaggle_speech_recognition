@@ -7,12 +7,13 @@ from sound_processing import process_wav_file
 from submission import main_predict, main_confusion_matrix
 from train import main_train
 
-if __name__ == '__main__':
-    if len(sys.argv) != 3:
+
+def main(args):
+    if len(args) != 3:
         print("Do `python3 src [local, gcloud, floyd] [predict, train]`")
         exit(-1)
     params = {}
-    if sys.argv[1] == 'floyd':
+    if args[1] == 'floyd':
         print("FLOYD ENV")
         params = {'data_path': '/data',
                   'output_path': '/output',
@@ -29,7 +30,7 @@ if __name__ == '__main__':
                   'batch_size_pred': 64,
                   'process_wav': process_wav_file
                   }
-    elif sys.argv[1] == 'gcloud':
+    elif args[1] == 'gcloud':
         print("GCLOUD ENV")
         params = {'data_path': '/mnt/data/speech/',
                   'output_path': './output',
@@ -67,12 +68,16 @@ if __name__ == '__main__':
         print("Do `python3 src [local, gcloud, floyd] [predict, train]`")
         exit(-1)
 
-    if sys.argv[2] == 'predict':
+    if args[2] == 'predict':
         main_predict(params)
-    elif sys.argv[2] == 'train':
+    elif args[2] == 'train':
         main_train(params, build(), train)
-    elif sys.argv[2] == 'confusion':
+    elif args[2] == 'confusion':
         main_confusion_matrix(params)
     else:
         print("Do `python3 src [local, gcloud, floyd] [predict, train]`")
         exit(-1)
+
+
+if __name__ == '__main__':
+    main(sys.argv)

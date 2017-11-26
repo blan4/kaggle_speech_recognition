@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 
+ALL_LABELS = 'bed bird cat dog down eight five four go happy house left marvin nine no off on one right seven sheila six stop three tree two up wow yes zero silence unknown'.split()
+TASK_LABELS = 'yes no up down left right on off stop go silence unknown'.split()
+
 L = 16000
 N = 2000
-LABELS = 'yes no up down left right on off stop go silence unknown'.split()
+LABELS = ALL_LABELS
 id2name = {i: name for i, name in enumerate(LABELS)}
 name2id = {name: i for i, name in id2name.items()}
 

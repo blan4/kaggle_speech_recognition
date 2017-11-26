@@ -9,8 +9,8 @@ class TestDataLoader(unittest.TestCase):
         train_df, valid_df = load_train_data('../../data/train/audio/*/**.wav', '../../data/train/validation_list.txt')
         self.assertTrue(train_df.shape[0] == 57929)
         self.assertTrue(valid_df.shape[0] == 6798)
-        df = train_df.groupby('label').apply(sampling(7))
-        print(df[df['label'] == 'silence'])
+        df = train_df.groupby('label').apply(sampling(2000))
+        print(df.shape)
 
     def test_get_silence(self):
         train_df, valid_df = load_train_data('../../data/train/audio/*/**.wav', '../../data/train/validation_list.txt')

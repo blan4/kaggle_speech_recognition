@@ -68,3 +68,4 @@ def adjust_len(wav, silence_data):
         silence_part_left = silence_part[0:j]
         silence_part_right = silence_part[j:rem_len]
         return np.concatenate([silence_part_left, wav, silence_part_right])
+    return wav
