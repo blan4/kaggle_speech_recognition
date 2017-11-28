@@ -2,8 +2,8 @@
 import sys
 from datetime import datetime
 
-from m_02_sound_2d import train, build
-from sound_processing import process_wav_file_to_2d
+from m_01_baseline import train, build
+from sound_processing import process_wav_file as process_wav_file
 from sound_reader import read_and_process
 from submission import main_predict, main_confusion_matrix
 from train import main_train
@@ -14,7 +14,7 @@ def main(args):
         print("Do `python3 src [local, gcloud, floyd] [predict, train]`")
         exit(-1)
     params = {}
-    process_sound = read_and_process(process_wav_file_to_2d)
+    process_sound = read_and_process(process_wav_file)
     if args[1] == 'floyd':
         print("FLOYD ENV")
         params = {'data_path': '/data',
@@ -40,8 +40,8 @@ def main(args):
                   'validation_list_path': '/mnt/data/speech/train/validation_list.txt',
                   'tensorboard_root': './output',
                   'sample': False,
-                  'sample_size': 1000,
-                  'epochs': 40,
+                  'sample_size': 2000,
+                  'epochs': 60,
                   'batch_size': 64,
                   'submission_path': './submissions/submission{}.csv'.format(datetime.now()),
                   'model_path': './output/BaselineSpeech_weights/weights-improvement-20-0.76.hdf5',
