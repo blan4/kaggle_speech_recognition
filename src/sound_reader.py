@@ -6,7 +6,7 @@ from sound_processing import scale_sound_int
 
 
 def read_wav_file(fname):
-    _, wav = wavfile.read(fname)
+    _, wav = emphasis(wavfile.read(fname))
     try:
         return scale_sound_int(wav)
     except Exception as err:
@@ -22,3 +22,7 @@ def read_and_process(process):
         return process(wav, silence)
 
     return _do
+
+
+def emphasis(signal, alpha=0.97):
+    return np.append(signal[0], signal[1:] - alpha * signal[:-1])
