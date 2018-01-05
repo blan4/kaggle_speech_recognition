@@ -108,8 +108,21 @@ class NormalizeWavProcessor(WavProcessor):
 
 
 class AddNoiseWavProcessor(WavProcessor):
+    def __init__(self, silence_data, sample_rate, L, max_noise=40) -> None:
+        super().__init__(silence_data, sample_rate, L)
+        self.max_noise = max_noise
+
     def process(self, wav):
         i = np.random.randint(0, len(self._silence_data) - self.L)
         silence_part = self._silence_data[i:(i + self.L)]
-        alpha = np.random.randint(0, 40) / 100.0
+        if np.random.choice([True, False]):
+            alpha = np.random.randint(0, self.max_noise) / 100.0
+        else:
+            alpha = 0
         return silence_part * alpha + wav
+
+
+class ShiftWavProcessor(WavProcessor):
+    def process(self, wav):
+        i = np.random.randint(-1600, 1600)
+        return np.append(wav[i:], wav[0:i])
