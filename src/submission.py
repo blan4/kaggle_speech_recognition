@@ -7,8 +7,11 @@ import pandas as pd
 from keras.models import load_model
 from sklearn.metrics import confusion_matrix
 
-from consts import id2name
+from consts import id2name, L
 from data_loader import load_train_data, valid_generator, get_silence, test_generator
+from sound_chain import SoundChain
+from sound_processing import AdjustLenWavProcessor, EmphasisWavProcessor, ReshapeWavProcessor
+from sound_reader import SimpleWavFileReader
 
 
 def main_predict(params):
@@ -20,8 +23,17 @@ def main_predict(params):
     train_data, validate_data = load_train_data(params['audio_path'], params['validation_list_path'])
     assert len(train_data) != 0
     assert len(validate_data) != 0
-    silence_data = get_silence(train_data)
-    tests = test_generator(test_paths, params['batch_size_pred'], silence_data, params['process_wav'])
+
+    wav_reader = SimpleWavFileReader()
+    silence_data = get_silence(train_data, wav_reader)
+    sound_chain = SoundChain(
+        SimpleWavFileReader(),
+        AdjustLenWavProcessor(silence_data, L, L),
+        EmphasisWavProcessor(silence_data, L, L, 0.97),
+        ReshapeWavProcessor(silence_data, L, L),
+    )
+
+    tests = test_generator(test_paths, params['batch_size_pred'], sound_chain)
     print("PREDICTING")
     predictions = model.predict_generator(tests, int(np.ceil(len(test_paths) / params['batch_size_pred'])))
     classes = np.argmax(predictions, axis=1)
@@ -42,8 +54,17 @@ def main_confusion_matrix(params):
     train_df, valid_df = load_train_data(params['audio_path'], params['validation_list_path'])
     assert len(train_df) != 0
     assert len(valid_df) != 0
-    silence_data = get_silence(train_df)
-    validate_gen = valid_generator(valid_df, silence_data, params['batch_size'], params['process_wav'], with_y=False)
+
+    wav_reader = SimpleWavFileReader()
+    silence_data = get_silence(train_df, wav_reader)
+    sound_chain = SoundChain(
+        SimpleWavFileReader(),
+        AdjustLenWavProcessor(silence_data, L, L),
+        EmphasisWavProcessor(silence_data, L, L, 0.97),
+        ReshapeWavProcessor(silence_data, L, L),
+    )
+
+    validate_gen = valid_generator(valid_df, params['batch_size'], sound_chain, with_y=False)
     predictions = model.predict_generator(validate_gen, int(np.ceil(valid_df.shape[0] / params['batch_size_pred'])))
     classes = [id2name[i] for i in np.argmax(predictions, axis=1)]
     y_true = valid_df['label'].values

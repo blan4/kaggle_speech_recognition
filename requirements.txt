@@ -6,3 +6,6 @@ soundfile
 numpy
 sklearn
 pandas
+python_speech_features
+librosa
+pysndfx

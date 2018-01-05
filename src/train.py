@@ -1,14 +1,18 @@
 # -*- coding: utf-8 -*-
 import os
+from datetime import datetime
 
 import numpy as np
 
-from consts import LABELS
+from consts import LABELS, L
 from data_loader import load_train_data, train_generator, valid_generator, get_silence, get_sample_data
+from sound_chain import SoundChain
+import sound_processing as sp
+from sound_reader import SimpleWavFileReader
 
 
 def main_train(params, model, train):
-    name = model.name
+    name = "{}--{}".format(model.name, int(datetime.now().timestamp()))
     print(params)
     chekpoints_path = os.path.join(params['output_path'], name + '_weights')
     os.makedirs(chekpoints_path, exist_ok=True)
@@ -19,14 +23,24 @@ def main_train(params, model, train):
     assert len(train_data) != 0
     assert len(validate_data) != 0
 
-    silence_data = get_silence(train_data)
+    wav_reader = SimpleWavFileReader()
+    silence_data = get_silence(train_data, wav_reader)
+    sound_chain = SoundChain(
+        SimpleWavFileReader(),
+        sp.AdjustLenWavProcessor(silence_data, L, L),
+        sp.AddNoiseWavProcessor(silence_data, L, L),
+        sp.EmphasisWavProcessor(silence_data, L, L, 0.97),
+        # sp.EffectsWavProcessor(silence_data, L, L),
+        sp.NormalizeWavProcessor(silence_data, L, L),
+        sp.ReshapeWavProcessor(silence_data, L, L),
+    )
 
     if params['sample']:
         print("Get small sample")
         train_data, validate_data = get_sample_data(train_data, validate_data, n)
 
-    train_gen = train_generator(train_data, silence_data, batch_size, params['process_wav'], n=n)
-    validate_gen = valid_generator(validate_data, silence_data, batch_size, params['process_wav'])
+    train_gen = train_generator(train_data, batch_size, sound_chain, n=n)
+    validate_gen = valid_generator(validate_data, batch_size, sound_chain, True)
 
     train(model, train_gen, validate_gen, dict(
         epochs=params['epochs'],

@@ -3,18 +3,17 @@ import sys
 from datetime import datetime
 
 from m_01_baseline import train, build
-from sound_processing import process_wav_file as process_wav_file
-from sound_reader import read_and_process
 from submission import main_predict, main_confusion_matrix
 from train import main_train
 
 
 def main(args):
+    help_str = "Do `python3 src [local, gcloud, floyd, devbox] [predict, train, confusion]`"
+
     if len(args) != 3:
-        print("Do `python3 src [local, gcloud, floyd] [predict, train]`")
+        print(help_str)
         exit(-1)
     params = {}
-    process_sound = read_and_process(process_wav_file)
     if args[1] == 'floyd':
         print("FLOYD ENV")
         params = {'data_path': '/data',
@@ -29,8 +28,7 @@ def main(args):
                   'submission_path': './output/submission{}.csv'.format(datetime.now()),
                   'model_path': './output/weights-improvement-20-0.76.hdf5',
                   'test_path': '???',
-                  'batch_size_pred': 64,
-                  'process_wav': process_sound
+                  'batch_size_pred': 64
                   }
     elif args[1] == 'gcloud':
         print("GCLOUD ENV")
@@ -46,8 +44,23 @@ def main(args):
                   'submission_path': './submissions/submission{}.csv'.format(datetime.now()),
                   'model_path': './output/BaselineSpeech_weights/weights-improvement-20-0.76.hdf5',
                   'test_path': '/mnt/data/speech/test/audio/*wav',
-                  'batch_size_pred': 64,
-                  'process_wav': process_sound
+                  'batch_size_pred': 64
+                  }
+    elif args[1] == 'devbox':
+        print("DEVBOX ENV")
+        params = {'data_path': '/home/ilya/Data/speech/',
+                  'output_path': '/home/ilya/Data/speech/out/output',
+                  'audio_path': '/home/ilya/Data/speech/train/audio/*/*wav',
+                  'validation_list_path': '/home/ilya/Data/speech/train/validation_list.txt',
+                  'tensorboard_root': '/home/ilya/Data/speech/out/output',
+                  'sample': False,
+                  'sample_size': 2000,
+                  'epochs': 75,
+                  'batch_size': 64,
+                  'submission_path': '/home/ilya/Data/speech/out/submissions/submission{}.csv'.format(datetime.now()),
+                  'model_path': '???',
+                  'test_path': '/home/ilya/Data/speech/test/audio/*wav',
+                  'batch_size_pred': 64
                   }
     elif sys.argv[1] == 'local':
         print("DEV ENV")
@@ -63,11 +76,10 @@ def main(args):
                   'submission_path': './submissions/submission{}.csv'.format(datetime.now()),
                   'model_path': './weights/weights-improvement-20-0.76.hdf5',
                   'test_path': './data/test/audio/*wav',
-                  'batch_size_pred': 1,
-                  'process_wav': process_sound
+                  'batch_size_pred': 1
                   }
     else:
-        print("Do `python3 src [local, gcloud, floyd] [predict, train]`")
+        print(help_str)
         exit(-1)
 
     if args[2] == 'predict':
@@ -77,7 +89,7 @@ def main(args):
     elif args[2] == 'confusion':
         main_confusion_matrix(params)
     else:
-        print("Do `python3 src [local, gcloud, floyd] [predict, train, confusion]`")
+        print(help_str)
         exit(-1)
 
 
