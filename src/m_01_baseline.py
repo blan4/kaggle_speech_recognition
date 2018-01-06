@@ -4,7 +4,7 @@ import os
 from keras import Input, metrics
 from keras.callbacks import TensorBoard, ModelCheckpoint
 from keras.engine import Model
-from keras.layers import Conv1D, MaxPooling1D, Flatten, Dense, Dropout, K, BatchNormalization
+from keras.layers import Conv1D, Flatten, Dense, Dropout, K, BatchNormalization, MaxPooling1D, AveragePooling1D
 from keras.optimizers import SGD
 
 from consts import L, LABELS
@@ -15,39 +15,60 @@ NAME = "BaselineSpeech"
 def build():
     inputs = Input(shape=(L, 1))  # 16000
     x = inputs
-    conf = [
-        ['c', 1, 15, 128],  # 16000x128
-        ['p', 5],  # 3200x128
-        ['c', 1, 7, 128],  # 3200x128
-        ['p', 5],  # 640x128
-        ['c', 1, 5, 256],  # 640x256
-        ['p', 5],  # 128x256
-        ['c', 1, 5, 256],  # 128x256
-        ['p', 4],  # 32x256
-        ['c', 1, 3, 512],  # 32x512
-        ['p', 4],  # 8x512
-        ['c', 1, 3, 512],  # 8x512
-        ['p', 4],  # 2x512
-        ['c', 1, 3, 1024],  # 2x1024
-        ['p', 2],  # 1x1024
-        ['c', 1, 3, 1024]  # 1x1024
-    ]
 
-    for layer in conf:
-        if layer[0] == 'c':
-            x = Conv1D(filters=layer[3], kernel_size=layer[2], strides=layer[1], padding='same', activation='relu')(x)
-        elif layer[0] == 'p':
-            x = MaxPooling1D(pool_size=layer[1], padding='same')(x)
-        else:
-            print("Unknown layer")
+    x = Conv1D(filters=8, kernel_size=3, strides=1, padding='same', activation='relu')(x)
+    # x = Conv1D(filters=8, kernel_size=3, strides=1, padding='same', activation='relu')(x)
+    x = MaxPooling1D(pool_size=2, padding='same')(x)
+
+    x = Conv1D(filters=16, kernel_size=3, strides=1, padding='same', activation='relu')(x)
+    # x = Conv1D(filters=16, kernel_size=3, strides=1, padding='same', activation='relu')(x)
+    x = MaxPooling1D(pool_size=2, padding='same')(x)
+    x = Dropout(0.2)(x)
+
+    x = Conv1D(filters=32, kernel_size=3, strides=1, padding='same', activation='relu')(x)
+    # x = Conv1D(filters=32, kernel_size=3, strides=1, padding='same', activation='relu')(x)
+    x = MaxPooling1D(pool_size=2, padding='same')(x)
+    x = Dropout(0.2)(x)
+
+    x = Conv1D(filters=64, kernel_size=3, strides=1, padding='same', activation='relu')(x)
+    # x = Conv1D(filters=64, kernel_size=3, strides=1, padding='same', activation='relu')(x)
+    x = MaxPooling1D(pool_size=2, padding='same')(x)
+    x = Dropout(0.2)(x)
+
+    x = Conv1D(filters=128, kernel_size=3, strides=1, padding='same', activation='relu')(x)
+    # x = Conv1D(filters=128, kernel_size=3, strides=1, padding='same', activation='relu')(x)
+    x = MaxPooling1D(pool_size=2, padding='same')(x)
+    x = Dropout(0.2)(x)
+
+    x = Conv1D(filters=256, kernel_size=3, strides=1, padding='same', activation='relu')(x)
+    # x = Conv1D(filters=256, kernel_size=3, strides=1, padding='same', activation='relu')(x)
+    x = MaxPooling1D(pool_size=2, padding='same')(x)
+    x = Dropout(0.2)(x)
+
+    x = Conv1D(filters=256, kernel_size=3, strides=1, padding='same', activation='relu')(x)
+    # x = Conv1D(filters=256, kernel_size=3, strides=1, padding='same', activation='relu')(x)
+    x = MaxPooling1D(pool_size=2, padding='same')(x)
+    x = Dropout(0.2)(x)
+
+    x = Conv1D(filters=512, kernel_size=3, strides=1, padding='same', activation='relu')(x)
+    # x = Conv1D(filters=512, kernel_size=3, strides=1, padding='same', activation='relu')(x)
+    x = MaxPooling1D(pool_size=2, padding='same')(x)
+    x = Dropout(0.2)(x)
+
+    x = Conv1D(filters=512, kernel_size=3, strides=1, padding='same', activation='relu')(x)
+    # x = Conv1D(filters=512, kernel_size=3, strides=2, padding='same', activation='relu')(x)
+    x = MaxPooling1D(pool_size=2, padding='same')(x)
+    x = Dropout(0.2)(x)
+
+    # x = Conv1D(filters=512, kernel_size=3, strides=1, padding='same', activation='relu')(x)
+    # x = Conv1D(filters=512, kernel_size=3, strides=1, padding='same', activation='relu')(x)
 
     x = Flatten()(x)
-    x = BatchNormalization()(x)
     x = Dropout(0.5)(x)
     x = Dense(512, activation='relu')(x)
-    x = BatchNormalization()(x)
-    x = Dropout(0.25)(x)
-    x = Dense(len(LABELS), activation='sigmoid')(x)  # 12
+    # x = Dropout(0.5)(x)
+    # x = Dense(256, activation='relu')(x)
+    x = Dense(len(LABELS), activation='softmax')(x)
 
     return Model(inputs, x, name=NAME)
 
@@ -67,7 +88,6 @@ def train(model, train_gen, validation_gen, params):
         validation_steps=params['validation_steps'],
         callbacks=[TensorBoard(
             log_dir=params['tensorboard_dir'],
-            write_images=True,
             batch_size=params['batch_size']
         ), ModelCheckpoint(
             os.path.join(params['chekpoints_path'],

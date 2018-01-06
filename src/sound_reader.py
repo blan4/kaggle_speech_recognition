@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from abc import abstractmethod
 
-from scipy.io import wavfile
+from librosa.core import load
 
 
 class WavFileReader:
@@ -11,6 +11,10 @@ class WavFileReader:
 
 
 class SimpleWavFileReader(WavFileReader):
+    def __init__(self, sample_rate) -> None:
+        super().__init__()
+        self.sample_rate = sample_rate
+
     def read(self, fname):
-        _, wav = wavfile.read(fname)
+        wav, _ = load(fname, sr=self.sample_rate)
         return wav

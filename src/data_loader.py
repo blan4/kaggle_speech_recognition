@@ -2,7 +2,6 @@
 import random
 import re
 from glob import glob
-from multiprocessing import Pool
 
 import numpy as np
 import pandas as pd
@@ -83,13 +82,12 @@ def valid_generator(valid_df, batch_size, sound_chain: SoundChain, with_y=True):
     while True:
         ids = list(range(valid_df.shape[0]))
         for start in range(0, len(ids), batch_size):
-            x_batch = []
-            y_batch = []
             end = min(start + batch_size, len(ids))
             i_val_batch = ids[start:end]
-            for i in i_val_batch:
-                x_batch.append(sound_chain.run(valid_df.wav_file.values[i]))
-                y_batch.append(valid_df.label_id.values[i])
+
+            x_batch = [sound_chain.run(valid_df.wav_file.values[i]) for i in i_val_batch]
+            y_batch = [valid_df.label_id.values[i] for i in i_val_batch]
+
             x_batch = np.array(x_batch)
             y_batch = to_categorical(y_batch, num_classes=len(LABELS))
 

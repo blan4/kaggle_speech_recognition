@@ -5,7 +5,7 @@ from datetime import datetime
 import numpy as np
 
 import sound_processing as sp
-from consts import LABELS, L
+from consts import L
 from data_loader import load_train_data, train_generator, valid_generator, get_silence, get_sample_data
 from sound_chain import SoundChain
 from sound_reader import SimpleWavFileReader
@@ -23,21 +23,21 @@ def main_train(params, model, train):
     assert len(train_data) != 0
     assert len(validate_data) != 0
 
-    wav_reader = SimpleWavFileReader()
+    wav_reader = SimpleWavFileReader(L)
     silence_data = get_silence(train_data, wav_reader)
 
     train_sound_chain = SoundChain(
-        SimpleWavFileReader(),
+        SimpleWavFileReader(L),
         sp.AdjustLenWavProcessor(silence_data, L, L),
-        sp.AddNoiseWavProcessor(silence_data, L, L, 30),
-        sp.ShiftWavProcessor(silence_data, L, L),
+        # sp.AddNoiseWavProcessor(silence_data, L, L, 20),
+        # sp.ShiftWavProcessor(silence_data, L, L),
         sp.EmphasisWavProcessor(silence_data, L, L, 0.97),
         sp.NormalizeWavProcessor(silence_data, L, L),
         sp.ReshapeWavProcessor(silence_data, L, L),
     )
 
     valid_sound_chain = SoundChain(
-        SimpleWavFileReader(),
+        SimpleWavFileReader(L),
         sp.AdjustLenWavProcessor(silence_data, L, L),
         sp.EmphasisWavProcessor(silence_data, L, L, 0.97),
         sp.NormalizeWavProcessor(silence_data, L, L),

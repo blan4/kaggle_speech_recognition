@@ -55,7 +55,7 @@ def main(args):
                   'tensorboard_root': '/home/ilya/Data/speech/out/output',
                   'sample': False,
                   'sample_size': 2000,
-                  'epochs': 75,
+                  'epochs': 200,
                   'batch_size': 64,
                   'submission_path': '/home/ilya/Data/speech/out/submissions/submission{}.csv'.format(datetime.now()),
                   'model_path': '???',

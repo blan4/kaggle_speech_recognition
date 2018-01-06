@@ -6,7 +6,7 @@ import numpy as np
 from augmentation import SoundEffects
 
 
-def _adjust_len(wav, silence_data, L):
+def _adjust_len(wav, silence_data, L, alpha=0.1):
     """
     Some files are short, so we add some silence to adjust their size.
     :param wav:
@@ -30,7 +30,7 @@ def _adjust_len(wav, silence_data, L):
         assert len(new_wav) == L
         # add low volume noise to the entire chunk of data.
         # we cannot add noise to the left and right sides only it would led to over fitting
-        return silence_part * 0.3 + new_wav
+        return silence_part * alpha + new_wav
 
     return wav
 
@@ -97,14 +97,27 @@ class EmphasisWavProcessor(WavProcessor):
 
 
 class NormalizeWavProcessor(WavProcessor):
+    def _ms(self, x):
+        """Mean value of signal `x` squared.
+        :param x: Dynamic quantity.
+        :returns: Mean squared of `x`.
+        """
+        return (np.abs(x) ** 2.0).mean()
+
+    def _normalize(self, y, x=None):
+        """normalize power in y to a (standard normal) white noise signal.
+        Optionally normalize to power in signal `x`.
+        #The mean power of a Gaussian with :math:`\\mu=0` and :math:`\\sigma=1` is 1.
+        """
+        # return y * np.sqrt( (np.abs(x)**2.0).mean() / (np.abs(y)**2.0).mean() )
+        if x is not None:
+            x = self._ms(x)
+        else:
+            x = 1.0
+        return y * np.sqrt(x / self._ms(y))
+
     def process(self, wav):
-        try:
-            return _scale_sound_int(wav)
-        except Exception as err:
-            print("Warning: sound with empty data. Cause: {}".format(err))
-            wav = wav.astype(np.float32)
-            wav.fill(0.5)
-            return wav
+        return self._normalize(wav)
 
 
 class AddNoiseWavProcessor(WavProcessor):
