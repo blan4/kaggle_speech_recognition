@@ -5,7 +5,7 @@ from datetime import datetime
 import numpy as np
 
 import sound_processing as sp
-from consts import L
+from consts import L, LABELS
 from data_loader import load_train_data, train_generator, valid_generator, get_silence, get_sample_data
 from sound_chain import SoundChain
 from sound_reader import SimpleWavFileReader
