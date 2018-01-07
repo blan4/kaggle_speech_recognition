@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 import unittest
-from glob import glob
 
+import numpy as np
+
+from consts import L
 from data_loader import load_train_data
-from sound_reader import read_wav_file
+from sound_reader import SimpleWavFileReader
+from tests import config
 
 
 class TestSoundReader(unittest.TestCase):
@@ -12,25 +15,16 @@ class TestSoundReader(unittest.TestCase):
     """
 
     def test_read_wav_train(self):
-        train_df, valid_df = load_train_data('../../data/train/audio/*/**.wav', '../../data/train/validation_list.txt')
+        sr = SimpleWavFileReader(L)
+        train_df, valid_df = load_train_data(config.audio_path, config.validation_list_path)
         self.assertTrue(train_df.shape[0] == 57929)
         self.assertTrue(valid_df.shape[0] == 6798)
         for _, file in train_df['wav_file'].iteritems():
-            w = read_wav_file(file)
-            self.assertLessEqual(w.max(), 1.0, file)
-            self.assertGreaterEqual(w.max(), 0.0, file)
+            w = sr.read(file)
+            self.assertFalse(np.isnan(w).any())
         for _, file in valid_df['wav_file'].iteritems():
-            w = read_wav_file(file)
-            self.assertLessEqual(w.max(), 1.0, file)
-            self.assertGreaterEqual(w.max(), 0.0, file)
-
-    def test_read_wav_test(self):
-        files = glob("../../data/test/audio/*.wav")
-        print("{} test samples".format(len(files)))
-        for file in files:
-            w = read_wav_file(file)
-            self.assertLessEqual(w.max(), 1.0, file)
-            self.assertGreaterEqual(w.max(), 0.0, file)
+            w = sr.read(file)
+            self.assertFalse(np.isnan(w).any())
 
 
 if __name__ == '__main__':

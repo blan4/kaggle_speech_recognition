@@ -113,7 +113,11 @@ class NormalizeWavProcessor(WavProcessor):
             x = self._ms(x)
         else:
             x = 1.0
-        return y * np.sqrt(x / self._ms(y))
+        ms = self._ms(y)
+        if ms <= 0.0000001:
+            return y
+
+        return y * np.sqrt(x / ms)
 
     def process(self, wav):
         return self._normalize(wav)
@@ -123,6 +127,7 @@ class MinMaxWavProcessor(WavProcessor):
     """
     Map signal into [0..1].
     """
+
     def __init__(self, silence_data, sample_rate, L, feature_range=(0, 1)) -> None:
         from sklearn.preprocessing import MinMaxScaler
         super().__init__(silence_data, sample_rate, L)

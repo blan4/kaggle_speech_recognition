@@ -10,9 +10,6 @@ from train import main_train
 def main(args):
     help_str = "Do `python3 src [local, gcloud, floyd, devbox] [predict, train, confusion]`"
 
-    if len(args) != 3:
-        print(help_str)
-        exit(-1)
     params = {}
     if args[1] == 'floyd':
         print("FLOYD ENV")
@@ -25,8 +22,7 @@ def main(args):
                   'sample_size': 1000,
                   'epochs': 20,
                   'batch_size': 64,
-                  'submission_path': './output/submission{}.csv'.format(datetime.now()),
-                  'model_path': './output/weights-improvement-20-0.76.hdf5',
+                  'submission_path': './output/submission',
                   'test_path': '???',
                   'batch_size_pred': 64
                   }
@@ -41,8 +37,7 @@ def main(args):
                   'sample_size': 2000,
                   'epochs': 60,
                   'batch_size': 64,
-                  'submission_path': './submissions/submission{}.csv'.format(datetime.now()),
-                  'model_path': './output/BaselineSpeech_weights/weights-improvement-20-0.76.hdf5',
+                  'submission_path': './submissions',
                   'test_path': '/mnt/data/speech/test/audio/*wav',
                   'batch_size_pred': 64
                   }
@@ -55,10 +50,9 @@ def main(args):
                   'tensorboard_root': '/home/ilya/Data/speech/out/output',
                   'sample': False,
                   'sample_size': 2000,
-                  'epochs': 200,
+                  'epochs': 60,
                   'batch_size': 64,
-                  'submission_path': '/home/ilya/Data/speech/out/submissions/submission{}.csv'.format(datetime.now()),
-                  'model_path': '???',
+                  'submission_path': '/home/ilya/Data/speech/out/submissions',
                   'test_path': '/home/ilya/Data/speech/test/audio/*wav',
                   'batch_size_pred': 64
                   }
@@ -73,8 +67,7 @@ def main(args):
                   'sample_size': 40,
                   'epochs': 10,
                   'batch_size': 8,
-                  'submission_path': './submissions/submission{}.csv'.format(datetime.now()),
-                  'model_path': './weights/weights-improvement-20-0.76.hdf5',
+                  'submission_path': './submissions',
                   'test_path': './data/test/audio/*wav',
                   'batch_size_pred': 1
                   }
@@ -82,11 +75,13 @@ def main(args):
         print(help_str)
         exit(-1)
 
-    if args[2] == 'predict':
+    if len(args) == 4 and args[2] == 'predict':
+        params['model_path'] = args[3]
         main_predict(params)
-    elif args[2] == 'train':
+    elif len(args) == 3 and args[2] == 'train':
         main_train(params, Classifier1D)
-    elif args[2] == 'confusion':
+    elif len(args) == 4 and args[2] == 'confusion':
+        params['model_path'] = args[3]
         main_confusion_matrix(params)
     else:
         print(help_str)

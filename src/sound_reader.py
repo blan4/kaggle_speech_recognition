@@ -18,6 +18,7 @@ class SimpleWavFileReader(WavFileReader):
 
     def read(self, fname):
         wav, _ = load(fname, sr=self.sample_rate)
+        wav = np.nan_to_num(wav)
         return wav
 
 

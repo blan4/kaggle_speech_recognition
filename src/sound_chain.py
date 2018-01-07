@@ -10,5 +10,9 @@ class SoundChain:
     def run(self, fname):
         wav = self._reader.read(fname)
         for proc in self._processors:
-            wav = proc.process(wav)
+            try:
+                wav = proc.process(wav)
+            except Exception as e:
+                print("Can't process file {} with {}: {}".format(fname, proc.__class__.__name__, e))
+                continue  # TODO: maybe stop?
         return wav

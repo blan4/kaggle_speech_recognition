@@ -5,7 +5,7 @@ from keras import Input, metrics
 from keras.callbacks import TensorBoard, ModelCheckpoint
 from keras.engine import Model
 from keras.layers import Conv1D, Flatten, Dense, Dropout, K, MaxPooling1D
-from keras.optimizers import SGD
+from keras.optimizers import SGD, RMSprop, Adam
 
 from classifier import Classifier
 
@@ -17,7 +17,7 @@ class Classifier1D(Classifier):
         self._name = "BaselineSpeech"
 
     def _build(self):
-        inputs = Input(shape=(self.L, 1))  # 16000
+        inputs = Input(shape=(self.L, 1), dtype='float32')  # 16000
         x = inputs
 
         x = Conv1D(filters=8, kernel_size=3, strides=1, padding='same', activation='relu')(x)
@@ -79,7 +79,7 @@ class Classifier1D(Classifier):
     def train(self, train_gen, validation_gen, params):
         print(params)
         self._model.summary()
-        self._model.compile(optimizer=SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True),
+        self._model.compile(optimizer=RMSprop(),
                             loss=K.categorical_crossentropy,
                             metrics=[metrics.categorical_accuracy])
 
