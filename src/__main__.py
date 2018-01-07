@@ -2,7 +2,7 @@
 import sys
 from datetime import datetime
 
-from m_01_baseline import train, build
+from m_01_baseline import Classifier1D
 from submission import main_predict, main_confusion_matrix
 from train import main_train
 
@@ -85,7 +85,7 @@ def main(args):
     if args[2] == 'predict':
         main_predict(params)
     elif args[2] == 'train':
-        main_train(params, build(), train)
+        main_train(params, Classifier1D)
     elif args[2] == 'confusion':
         main_confusion_matrix(params)
     else:

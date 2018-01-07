@@ -8,7 +8,6 @@ import pandas as pd
 
 from consts import LABELS, name2id
 from sound_chain import SoundChain
-from sound_reader import WavFileReader
 from utils import to_categorical
 
 
@@ -54,12 +53,6 @@ def load_train_data(audio_path, validation_list_path):
     train_df = pd.DataFrame(train, columns=columns_list)
     valid_df = pd.DataFrame(val, columns=columns_list)
     return train_df, valid_df
-
-
-def get_silence(train_df, reader: WavFileReader):
-    silence_files = train_df[train_df.label == 'silence']
-    silence_data = np.concatenate([reader.read(x) for x in silence_files.wav_file.values])
-    return silence_data
 
 
 def train_generator(train_df: pd.DataFrame, batch_size, sound_chain: SoundChain, n=2000):

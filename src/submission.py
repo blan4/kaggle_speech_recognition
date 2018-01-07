@@ -8,10 +8,10 @@ from keras.models import load_model
 from sklearn.metrics import confusion_matrix
 
 from consts import id2name, L
-from data_loader import load_train_data, valid_generator, get_silence, test_generator
+from data_loader import load_train_data, valid_generator, test_generator
 from sound_chain import SoundChain
 from sound_processing import AdjustLenWavProcessor, EmphasisWavProcessor, ReshapeWavProcessor
-from sound_reader import SimpleWavFileReader
+from sound_reader import SimpleWavFileReader, get_silence
 
 
 def main_predict(params):

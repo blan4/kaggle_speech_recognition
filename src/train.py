@@ -1,17 +1,20 @@
 # -*- coding: utf-8 -*-
 import os
 from datetime import datetime
+from typing import Type
 
 import numpy as np
 
 import sound_processing as sp
+from classifier import Classifier
 from consts import L, LABELS
-from data_loader import load_train_data, train_generator, valid_generator, get_silence, get_sample_data
+from data_loader import load_train_data, train_generator, valid_generator, get_sample_data
 from sound_chain import SoundChain
-from sound_reader import SimpleWavFileReader
+from sound_reader import SimpleWavFileReader, get_silence
 
 
-def main_train(params, model, train):
+def main_train(params, clf: Type[Classifier]):
+    model = clf(L, LABELS)
     name = "{}--{}".format(model.name, int(datetime.now().timestamp()))
     print(params)
     chekpoints_path = os.path.join(params['output_path'], name + '_weights')
@@ -34,6 +37,7 @@ def main_train(params, model, train):
         sp.EmphasisWavProcessor(silence_data, L, L, 0.97),
         sp.NormalizeWavProcessor(silence_data, L, L),
         sp.ReshapeWavProcessor(silence_data, L, L),
+        sp.MinMaxWavProcessor(silence_data, L, L, (0, 1)),
     )
 
     valid_sound_chain = SoundChain(
@@ -42,6 +46,7 @@ def main_train(params, model, train):
         sp.EmphasisWavProcessor(silence_data, L, L, 0.97),
         sp.NormalizeWavProcessor(silence_data, L, L),
         sp.ReshapeWavProcessor(silence_data, L, L),
+        sp.MinMaxWavProcessor(silence_data, L, L, (0, 1)),
     )
 
     if params['sample']:
@@ -51,7 +56,7 @@ def main_train(params, model, train):
     train_gen = train_generator(train_data, batch_size, train_sound_chain, n=n)
     validate_gen = valid_generator(validate_data, batch_size, valid_sound_chain, True)
 
-    train(model, train_gen, validate_gen, dict(
+    model.train(train_gen, validate_gen, dict(
         epochs=params['epochs'],
         batch_size=batch_size,
         tensorboard_dir=os.path.join(params['tensorboard_root'], name),

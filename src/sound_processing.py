@@ -109,7 +109,6 @@ class NormalizeWavProcessor(WavProcessor):
         Optionally normalize to power in signal `x`.
         #The mean power of a Gaussian with :math:`\\mu=0` and :math:`\\sigma=1` is 1.
         """
-        # return y * np.sqrt( (np.abs(x)**2.0).mean() / (np.abs(y)**2.0).mean() )
         if x is not None:
             x = self._ms(x)
         else:
@@ -118,6 +117,19 @@ class NormalizeWavProcessor(WavProcessor):
 
     def process(self, wav):
         return self._normalize(wav)
+
+
+class MinMaxWavProcessor(WavProcessor):
+    """
+    Map signal into [0..1].
+    """
+    def __init__(self, silence_data, sample_rate, L, feature_range=(0, 1)) -> None:
+        from sklearn.preprocessing import MinMaxScaler
+        super().__init__(silence_data, sample_rate, L)
+        self.scaler = MinMaxScaler(feature_range)
+
+    def process(self, wav):
+        return self.scaler.fit_transform(wav)
 
 
 class AddNoiseWavProcessor(WavProcessor):
