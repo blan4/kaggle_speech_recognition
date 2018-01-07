@@ -21,16 +21,16 @@ class Classifier1D(Classifier):
         x = inputs
 
         x = Conv1D(filters=8, kernel_size=3, strides=1, padding='same', activation='relu')(x)
-        # x = Conv1D(filters=8, kernel_size=3, strides=1, padding='same', activation='relu')(x)
+        x = Conv1D(filters=8, kernel_size=3, strides=1, padding='same', activation='relu')(x)
         x = MaxPooling1D(pool_size=2, padding='same')(x)
 
         x = Conv1D(filters=16, kernel_size=3, strides=1, padding='same', activation='relu')(x)
-        # x = Conv1D(filters=16, kernel_size=3, strides=1, padding='same', activation='relu')(x)
+        x = Conv1D(filters=16, kernel_size=3, strides=1, padding='same', activation='relu')(x)
         x = MaxPooling1D(pool_size=2, padding='same')(x)
         # x = Dropout(0.2)(x)
 
         x = Conv1D(filters=32, kernel_size=3, strides=1, padding='same', activation='relu')(x)
-        # x = Conv1D(filters=32, kernel_size=3, strides=1, padding='same', activation='relu')(x)
+        x = Conv1D(filters=32, kernel_size=3, strides=1, padding='same', activation='relu')(x)
         x = MaxPooling1D(pool_size=2, padding='same')(x)
         # x = Dropout(0.2)(x)
 

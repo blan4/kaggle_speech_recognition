@@ -32,8 +32,8 @@ def main_train(params, clf: Type[Classifier]):
     train_sound_chain = SoundChain(
         SimpleWavFileReader(L),
         sp.AdjustLenWavProcessor(silence_data, L, L),
-        # sp.AddNoiseWavProcessor(silence_data, L, L, 20),
-        # sp.ShiftWavProcessor(silence_data, L, L),
+        sp.AddNoiseWavProcessor(silence_data, L, L, 20),
+        sp.ShiftWavProcessor(silence_data, L, L),
         sp.EmphasisWavProcessor(silence_data, L, L, 0.97),
         sp.NormalizeWavProcessor(silence_data, L, L),
         sp.ReshapeWavProcessor(silence_data, L, L),
