@@ -2,6 +2,7 @@
 import sys
 from datetime import datetime
 
+from deep_model import Deep1DClassifier
 from m_01_baseline import Classifier1D
 from submission import main_predict, main_confusion_matrix
 from train import main_train
@@ -50,8 +51,8 @@ def main(args):
                   'tensorboard_root': '/home/ilya/Data/speech/out/output',
                   'sample': False,
                   'sample_size': 2000,
-                  'epochs': 60,
-                  'batch_size': 64,
+                  'epochs': 120,
+                  'batch_size': 128,
                   'submission_path': '/home/ilya/Data/speech/out/submissions',
                   'test_path': '/home/ilya/Data/speech/test/audio/*wav',
                   'batch_size_pred': 64
@@ -80,6 +81,8 @@ def main(args):
         main_predict(params)
     elif len(args) == 3 and args[2] == 'train':
         main_train(params, Classifier1D)
+    elif len(args) == 3 and args[2] == 'train_deep_1d':
+        main_train(params, Deep1DClassifier)
     elif len(args) == 4 and args[2] == 'confusion':
         params['model_path'] = args[3]
         main_confusion_matrix(params)
